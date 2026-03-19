@@ -1,0 +1,7 @@
+# Certificates are generated locally by .devcontainer/setup-host.sh (or setup-host.ps1).
+# They must not be committed — each developer generates their own CA and signs their own certs.
+*.crt
+*.key
+*.csr
+*.srl
+*.ext

@@ -1,0 +1,10 @@
+{
+    "name": "Vanilla Dev",
+    "dockerComposeFile": "docker-compose.devcontainer.yml",
+    "service": "devcontainer",
+    "workspaceFolder": "/srv/vanilla-repositories/vanilla",
+    "initializeCommand": "bash .devcontainer/setup-host.sh || powershell.exe -ExecutionPolicy Bypass -File .devcontainer/setup-host.ps1",
+    "postCreateCommand": "composer install && yarn install && cli/bin/vnla install && ln -sf ../docker/bootstrap.before.php conf/bootstrap.before.php && ln -sf ../docker/bootstrap.docker.php conf/bootstrap.early.php",
+    "forwardPorts": [80, 443, 3306],
+    "remoteUser": "www-data"
+}

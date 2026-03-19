@@ -1,0 +1,39 @@
+# Dev container compose overlay. Does NOT replace vnla docker — runs alongside it.
+# Infrastructure (nginx, php-fpm, mysql, memcached) is started by setup-host.sh.
+name: "vanilla"
+
+services:
+    devcontainer:
+        build:
+            context: ..
+            dockerfile: .devcontainer/Dockerfile
+            args:
+                WWWGROUP: "${WWWGROUP:-1000}"
+                WWWUSER: "${WWWUSER:-1000}"
+                DOCKER_GID: "${DOCKER_GID:-999}"
+        volumes:
+            - "..:/srv/vanilla-repositories/vanilla:cached"
+            - "../conf:/srv/vanilla-repositories/conf"
+            - "../cache:/srv/vanilla-repositories/cache"
+            - "../docker/images/nginx/certs:/usr/local/share/ca-certificates"
+            # Keep node_modules and the Yarn berry cache in Docker-managed volumes so
+            # they are owned by www-data and are not subject to host filesystem
+            # permission issues (critical on WSL2 / Windows).
+            - devcontainer-node-modules:/srv/vanilla-repositories/vanilla/node_modules
+            - devcontainer-yarn-cache:/srv/vanilla-repositories/vanilla/.yarn/berry
+            # Docker socket — allows docker CLI commands (e.g. docker exec, docker compose)
+            # to run from inside the devcontainer. www-data is added to the docker group
+            # in the Dockerfile to avoid needing sudo for socket access.
+            - /var/run/docker.sock:/var/run/docker.sock
+        networks:
+            vanilla-network:
+        command: sleep infinity
+
+volumes:
+    devcontainer-node-modules:
+    devcontainer-yarn-cache:
+
+networks:
+    vanilla-network:
+        external: true
+        name: "vanilla-network"

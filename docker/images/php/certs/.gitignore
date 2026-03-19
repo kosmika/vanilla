@@ -1,0 +1,4 @@
+# Certificates are copied here from docker/images/nginx/certs by setup-host.sh (or setup-host.ps1).
+# They must not be committed — each developer generates their own locally.
+*.crt
+*.key

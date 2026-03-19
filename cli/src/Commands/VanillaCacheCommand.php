@@ -46,15 +46,39 @@ class VanillaCacheCommand extends Console\Command\Command
         $addonManager->ensureMultiCache();
 
         $this->logger()->info("Clearing Memcached");
+        $this->flushMemcached();
+
+        $this->logger()->success("Caches cleared.");
+
+        return 0;
+    }
+
+    /**
+     * Flush all Memcached keys.
+     *
+     * Attempts a direct TCP connection to the memcached container first (works
+     * when running inside the devcontainer, which shares vanilla-network with
+     * the memcached container). Falls back to `docker exec` for the host-side
+     * workflow where Docker is available but the container network is not.
+     */
+    private function flushMemcached(): void
+    {
+        $host = "memcached";
+        $port = 11211;
+
+        $socket = @fsockopen($host, $port, $errno, $errstr, 2);
+        if ($socket !== false) {
+            fwrite($socket, "flush_all\r\n");
+            fclose($socket);
+            return;
+        }
+
+        // Not reachable directly — fall back to docker exec (host workflow).
         DockerUtils::containerCommand(
             DockerCommand::VNLA_DOCKER_CWD,
             "memcached",
             "/",
             "echo 'flush_all' | nc localhost 11211"
         );
-
-        $this->logger()->success("Caches cleared.");
-
-        return 0;
     }
 }

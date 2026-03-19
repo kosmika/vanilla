@@ -110,7 +110,7 @@ class SpawnSiteCommand extends Console\Command\Command
         putenv("TEST_DB_USER=root");
         $testClient = new E2ETestClient($basePath, "vanilla.local");
         $testClient->dbPrefix = "vanilla_";
-        @$testClient->install();
+        $testClient->install(bootstrap: false);
 
         $testClient->get("/utility/alive.json");
         $this->logger()->info("Site is alive");

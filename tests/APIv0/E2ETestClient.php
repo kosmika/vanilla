@@ -14,6 +14,8 @@ use Garden\Http\HttpResponse;
 use Gdn;
 use League\Uri\Http;
 use PDO;
+use PHPUnit\Framework\TestCase;
+use Ramsey\Uuid\Uuid;
 use Vanilla\Addon;
 use Vanilla\AddonManager;
 use Vanilla\Utility\UrlUtils;
@@ -353,9 +355,26 @@ SQL
         ]);
         self::setAPIKey($apiKey);
 
-        $r = $this->post("/utility/update.json");
-        if (!$r["Success"]) {
-            throw new \Exception("Utility update failed.");
+        // Retry the update POST because Docker volume mounts can delay
+        // config propagation from host to container, causing early requests to fail.
+        $maxRetries = 10;
+        $r = null;
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                $r = $this->post("/utility/update.json");
+                if ($r["Success"]) {
+                    break;
+                }
+            } catch (\Exception $e) {
+                if ($attempt >= $maxRetries) {
+                    throw new \Exception(
+                        "Utility update failed after {$maxRetries} attempts. Last error: " . $e->getMessage(),
+                        $e->getCode(),
+                        $e
+                    );
+                }
+                sleep(2);
+            }
         }
 
         // This can be flaky in docker.
